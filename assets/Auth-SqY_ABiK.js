@@ -1,0 +1,1 @@
+import{j as s}from"./index-Dz1OiEwP.js";const a="/assets/background-BMKr0Fmo.png",e=({children:r})=>s.jsxs("div",{className:"flex",children:[s.jsx("div",{className:"",children:s.jsx("img",{src:a,alt:"encore background",className:"h-[100vh] w-[818px] "})}),s.jsx("div",{children:r})]});export{e as A};
