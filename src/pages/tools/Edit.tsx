@@ -126,10 +126,10 @@ const Edit = () => {
         }, 2000);
       }
     } catch (error: any) {
-      if (error.response.data.error) {
+      if (error.response.data.success) {
         console.log(error);
         setLoading(false);
-        showToast(error.response.data.error, "error");
+        showToast(error.response.data.message, "error");
         return;
       }
     }

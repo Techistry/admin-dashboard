@@ -87,9 +87,10 @@ const Sign_In = () => {
         localStorage.setItem("adminData", JSON.stringify(response.data.data));
         return;
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Login error:", error);
-      showToast("An error occurred while logging in.", "error");
+      showToast(error.response.data.message, "error");
+
       return;
     }
   };
