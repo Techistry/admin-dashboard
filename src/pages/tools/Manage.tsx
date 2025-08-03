@@ -137,7 +137,7 @@ const Manage = () => {
               <TableRow sx={{ backgroundColor: "#F0F2F5", height: "45px" }}>
                 <TableCell>
                   <Typography fontWeight={500} fontSize={12} color="#2B2B33">
-                    Tool Name
+                    Tool Nam
                   </Typography>
                 </TableCell>
                 <TableCell align="left">
