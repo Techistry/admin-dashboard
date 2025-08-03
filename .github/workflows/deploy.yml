@@ -1,4 +1,4 @@
-name: 🚀 Build & Deploy to Hostinger via Git
+name: 🚀 Build & Deploy to Hostinger via GitHub Pages
 
 on:
   push:
@@ -29,20 +29,14 @@ jobs:
       - name: 🏗 Build Project
         run: npm run build
 
-      - name: 🚀 Deploy dist/ to deploy branch
+      - name: 🚀 Deploy to deploy branch
         run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git config pull.rebase false  # 👈 ADD THIS LINE to choose merge strategy
-
-          mkdir temp && cp -r dist/* temp/ && cd temp
-
+          cd dist
           git init
-          git checkout -b deploy
-
-          git remote add origin https://x-access-token:${{ secrets.DEPLOY_PAT }}@github.com/${{ github.repository }}
-          git pull origin deploy --rebase || echo "No existing deploy branch"  # Optional fallback
-
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add .
-          git commit -m "Deploy built site from ${{ github.sha }}"
+          git commit -m "Deploy from ${{ github.sha }}"
+          git branch -M deploy
+          git remote add origin https://x-access-token:${{ secrets.DEPLOY_PAT }}@github.com/${{ github.repository }}
           git push --force origin deploy
