@@ -1,7 +1,6 @@
 import { IoNotifications } from "react-icons/io5";
 import Navbar from "../../components/Navbar";
 import Pages from "../../container/Pages";
-// import { Button } from "@mui/material";
 import Create_Tool from "../../modals/tools/Create_Tool";
 import {
   Box,
@@ -19,9 +18,7 @@ import {
 import { FiSearch } from "react-icons/fi";
 import { useEffect, useMemo, useState } from "react";
 import Actions from "../../components/tools/Actions";
-
 import { useNavigate } from "react-router-dom";
-
 import api from "../../utils/axiosInstance";
 import ImportTools from "../../modals/tools/ImportTools";
 import DynamicTitle from "../../utils/DynamicTitle";
@@ -42,13 +39,35 @@ interface Category {
 
 const Manage = () => {
   const navigate = useNavigate();
-  const [tools, setTools] = useState<ToolState[]>();
-  const [loading, setLoading] = useState<boolean>(true);
 
+  const [tools, setTools] = useState<ToolState[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState<string>("");
 
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [page, setPage] = useState<number>(0); // 0-indexed for MUI
+  const [rowsPerPage, setRowsPerPage] = useState<number>(5);
+  const [totalCount, setTotalCount] = useState<number>(0);
+
+  const getTools = async () => {
+    setLoading(true);
+    try {
+      const response = await api.get(
+        `/api/tool/all?limit=${rowsPerPage}&skip=${page * rowsPerPage}`
+      );
+      if (response.data.success) {
+        setTools(response.data.data);
+        setTotalCount(response.data.total); // From backend
+      }
+    } catch (error: any) {
+      console.error("Failed to fetch tools:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    getTools();
+  }, [page, rowsPerPage]);
 
   const handleChangePage = (event: unknown, newPage: number) => {
     setPage(newPage);
@@ -58,43 +77,17 @@ const Manage = () => {
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
+    setPage(0); // Reset to first page
   };
-
-  const getTools = async () => {
-    setLoading(true);
-
-    try {
-      const response = await api.get("/api/tool/all");
-      if (response.data.success) {
-        setTools(response.data.data);
-        return;
-      }
-    } catch (error: any) {
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    getTools();
-  }, []);
 
   const filteredTools = useMemo(() => {
     if (!searchQuery.trim()) return tools;
-    return tools?.filter((tool) =>
+    return tools.filter((tool) =>
       `${tool.name} ${tool.category_id.name}`
         .toLowerCase()
         .includes(searchQuery.toLowerCase())
     );
   }, [searchQuery, tools]);
-
-  const paginatedTools = useMemo(() => {
-    const start = page * rowsPerPage;
-    const end = start + rowsPerPage;
-    return filteredTools?.slice(start, end);
-  }, [filteredTools, page, rowsPerPage]);
 
   return (
     <Pages>
@@ -103,7 +96,6 @@ const Manage = () => {
       <Navbar page="Tool Management">
         <div className="flex gap-[1rem] items-center">
           <IoNotifications color="#777777" size={20} />
-
           <Create_Tool refreshTools={getTools} />
         </div>
       </Navbar>
@@ -115,11 +107,7 @@ const Manage = () => {
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search A.I tools"
             size="small"
-            sx={{
-              "& .MuiOutlinedInput-root": {
-                borderRadius: "8px",
-              },
-            }}
+            sx={{ "& .MuiOutlinedInput-root": { borderRadius: "8px" } }}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
@@ -128,7 +116,6 @@ const Manage = () => {
               ),
             }}
           />
-
           <ImportTools refreshTools={getTools} />
         </div>
 
@@ -137,14 +124,15 @@ const Manage = () => {
             <TablePagination
               rowsPerPageOptions={[5, 10]}
               component="div"
-              count={filteredTools?.length || 0}
+              count={searchQuery ? filteredTools.length : totalCount}
               rowsPerPage={rowsPerPage}
               page={page}
               onPageChange={handleChangePage}
               onRowsPerPageChange={handleChangeRowsPerPage}
             />
           </div>
-          <Table sx={{ minWidth: 650 }} aria-label="admin table" size="small">
+
+          <Table sx={{ minWidth: 650 }} aria-label="tools table" size="small">
             <TableHead>
               <TableRow sx={{ backgroundColor: "#F0F2F5", height: "45px" }}>
                 <TableCell>
@@ -159,7 +147,7 @@ const Manage = () => {
                 </TableCell>
                 <TableCell align="left">
                   <Typography fontWeight={500} fontSize={12} color="#2B2B33">
-                    Cateogory
+                    Category
                   </Typography>
                 </TableCell>
                 <TableCell align="left">
@@ -173,17 +161,17 @@ const Manage = () => {
 
             <TableBody>
               {loading ? (
-                Array.from({ length: 5 }).map((_, index) => (
+                Array.from({ length: rowsPerPage }).map((_, index) => (
                   <TableRow key={index}>
-                    {Array.from({ length: 6 }).map((__, idx) => (
+                    {Array.from({ length: 5 }).map((__, idx) => (
                       <TableCell key={idx}>
                         <Skeleton variant="text" width="100%" height={30} />
                       </TableCell>
                     ))}
                   </TableRow>
                 ))
-              ) : paginatedTools && paginatedTools.length > 0 ? (
-                paginatedTools.map((row) => (
+              ) : filteredTools.length > 0 ? (
+                filteredTools.map((row) => (
                   <TableRow
                     key={row._id}
                     sx={{
@@ -204,9 +192,9 @@ const Manage = () => {
                         />
                         <Typography
                           color="#808084"
-                          sx={{ fontFamily: "Open Sans, sans-serif" }}
                           fontWeight={400}
                           fontSize={14}
+                          sx={{ fontFamily: "Open Sans, sans-serif" }}
                         >
                           {row.name}
                         </Typography>
@@ -221,16 +209,13 @@ const Manage = () => {
                         whiteSpace: "nowrap",
                         overflow: "hidden",
                         textOverflow: "ellipsis",
-                        cursor: "pointer",
                       }}
                     >
                       <Typography
                         color="#808084"
-                        sx={{
-                          fontFamily: "Open Sans, sans-serif",
-                          fontWeight: 400,
-                          fontSize: 14,
-                        }}
+                        fontWeight={400}
+                        fontSize={14}
+                        sx={{ fontFamily: "Open Sans, sans-serif" }}
                       >
                         {row.description}
                       </Typography>
@@ -242,22 +227,22 @@ const Manage = () => {
                     >
                       <Typography
                         color="#808084"
-                        sx={{ fontFamily: "Open Sans, sans-serif" }}
                         fontWeight={400}
                         fontSize={14}
+                        sx={{ fontFamily: "Open Sans, sans-serif" }}
                       >
                         {row.category_id.name}
                       </Typography>
                     </TableCell>
 
                     <TableCell align="left">
-                      <div className="bg-[#F0EEFF] rounded-[72px] py-[8px] pl-[12px] pr-[12px] w-[130px] overflow-hidden whitespace-nowrap text-ellipsis">
+                      <div className="bg-[#F0EEFF] rounded-[72px] py-[8px] px-[12px] w-[130px] overflow-hidden whitespace-nowrap text-ellipsis">
                         <a target="_blank" href={row.demo_url}>
                           <Typography
                             color="#755AE2"
-                            sx={{ fontFamily: "Open Sans, sans-serif" }}
                             fontWeight={400}
                             fontSize={14}
+                            sx={{ fontFamily: "Open Sans, sans-serif" }}
                           >
                             {row.demo_url}
                           </Typography>
@@ -277,7 +262,7 @@ const Manage = () => {
                       <Typography variant="body1" color="textSecondary">
                         {searchQuery
                           ? "No matching tools found."
-                          : "No tools found. Please create new tool."}
+                          : "No tools found. Please create a new tool."}
                       </Typography>
                     </Box>
                   </TableCell>

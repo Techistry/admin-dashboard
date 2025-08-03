@@ -2,7 +2,7 @@ import axios from "axios";
 import NProgress from "nprogress";
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_BASE_URL_PROD,
+  baseURL: import.meta.env.VITE_BASE_URL_DEV,
   withCredentials: true,
 });
 
