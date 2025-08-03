@@ -77,7 +77,7 @@ const Manage = () => {
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0); // Reset to first page
+    setPage(0);
   };
 
   const filteredTools = useMemo(() => {
@@ -189,6 +189,7 @@ const Manage = () => {
                           alt={`Logo for ${row.name}`}
                           height={25}
                           width={25}
+                          crossOrigin="anonymous"
                         />
                         <Typography
                           color="#808084"
